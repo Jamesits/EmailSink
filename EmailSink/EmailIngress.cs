@@ -44,6 +44,12 @@ namespace EmailSink
                 case "from":
                     email.From = value;
                     break;
+                case "List-Id":
+                    email.ListId = value;
+                    break;
+                case "Reply-To":
+                    email.ReplyTo = value;
+                    break;
                 case "In-Reply-To":
                     email.InReplyTo = value;
                     break;
@@ -76,6 +82,12 @@ namespace EmailSink
                     break;
                 case "X-Mailgun-Variables":
                     email.MailgunVariables = value;
+                    break;
+                case "X-Mailgun-SFlag":
+                    email.MailgunSFlag = value;
+                    break;
+                case "X-Mailgun-SScore":
+                    email.MailgunSScore = value;
                     break;
             }
         }

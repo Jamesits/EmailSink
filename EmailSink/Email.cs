@@ -8,6 +8,8 @@ namespace EmailSink
         public string ReceivedTime { get; set; }
         public DateTime? HookTime { get; set; }
         public string From { get; set; }
+        public string ListId { get; set; }
+        public string ReplyTo { get; set; }
         public string InReplyTo { get; set; }
         public string References { get; set; }
         public string Sender { get; set; }
@@ -20,5 +22,7 @@ namespace EmailSink
         public string BodyPlain { get; set; }
         public string BodyHtml { get; set; }
         public string MailgunVariables { get; set; }
+        public string MailgunSFlag { get; set; }
+        public string MailgunSScore { get; set; }
     }
 }
