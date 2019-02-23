@@ -58,6 +58,7 @@ namespace EmailSink
                 var stream = new StreamContent(req.Body);
                 stream.Headers.ContentType =
                     System.Net.Http.Headers.MediaTypeHeaderValue.Parse(req.Headers["Content-Type"]);
+                log.LogInformation(stream.Headers.ContentType.ToString());
                 var result = await stream.ReadAsMultipartAsync();
 
                 var email = new Email()
@@ -154,7 +155,7 @@ namespace EmailSink
             
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                log.LogError(ex, "Unhandled generic exception");
 
                 // tell Mailgun to retry
                 return StaticActionResult(HttpStatusCode.InternalServerError, $"Unhandled exception: {ex}");
