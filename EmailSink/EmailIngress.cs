@@ -12,7 +12,7 @@ namespace EmailSink
     public static class EmailIngress
     {
         [FunctionName("EmailIngress")]
-        public static async System.Threading.Tasks.Task<IActionResult> RunAsync(
+        public static async System.Threading.Tasks.Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]
             HttpRequest req,
             [Table("Emails")]
@@ -22,10 +22,6 @@ namespace EmailSink
         {
             try
             {
-                string name = req.Query["name"];
-
-                // string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-
                 // parse header
                 log.LogWarning("Headers");
                 foreach (var kvpair in req.Headers)
@@ -47,13 +43,14 @@ namespace EmailSink
                     log.LogInformation($"{key} = {value}");
                 }
 
-                return new OkObjectResult("Success");
-                // dynamic data = JsonConvert.DeserializeObject(requestBody);
-                // name = name ?? data?.name;
+                // check if the request is coming from Mailgun
+                if (!req.Headers["User-Agent"].ToString().StartsWith("User-Agent"))
+                {
+                    return new BadRequestObjectResult("Unidentifiable content");
+                }
 
-                // return name != null
-                //     ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                //     : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+
+                return new OkObjectResult("Success");
             }
             catch (Exception ex)
             {
