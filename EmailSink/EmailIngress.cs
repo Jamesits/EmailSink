@@ -106,6 +106,9 @@ namespace EmailSink
                         case "body-html":
                             bodyHtml = value;
                             break;
+                        case "X-Mailgun-Variables":
+                            email.MailgunVariables = value;
+                            break;
                     }
                 }
 

@@ -32,5 +32,6 @@ namespace EmailSink
         public string StrippedSignature { get; set; }
         public bool isHtml { get; set; }
         public string Body { get; set; }
+        public string MailgunVariables { get; set; }
     }
 }
