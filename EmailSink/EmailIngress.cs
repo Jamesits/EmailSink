@@ -136,13 +136,9 @@ namespace EmailSink
                     operation.Telemetry.Context.Operation.Id = context.InvocationId.ToString();
                     try
                     {
-                        // get the exception
-                        // https://blogs.msdn.microsoft.com/ptorr/2014/12/10/async-exceptions-in-c/
-                        var t = tableBinding.AddAsync(email);
-                        await t;
-                        if (t.Exception != null) throw t.Exception;
+                        await tableBinding.AddAsync(email);
                     }
-                    catch (Microsoft.WindowsAzure.Storage.StorageException ex)
+                    catch (System.InvalidOperationException ex)
                     {
                         log.LogError(ex, "Possible duplicate email");
 
@@ -158,10 +154,6 @@ namespace EmailSink
             catch (Exception ex)
             {
                 log.LogError(ex.ToString());
-                if (ex is Microsoft.WindowsAzure.Storage.StorageException)
-                {
-                    log.LogWarning("Possible duplicate email");
-                }
 
                 // tell Mailgun to retry
                 return new InternalServerErrorResult();
