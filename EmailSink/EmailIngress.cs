@@ -134,19 +134,26 @@ namespace EmailSink
                 using (var operation = Telemetry.Client.StartOperation<DependencyTelemetry>("WriteTable"))
                 {
                     operation.Telemetry.Context.Operation.Id = context.InvocationId.ToString();
+                    try
+                    {
+                        // get the exception
+                        // https://blogs.msdn.microsoft.com/ptorr/2014/12/10/async-exceptions-in-c/
+                        var t = tableBinding.AddAsync(email);
+                        await t;
+                    }
+                    catch (Microsoft.WindowsAzure.Storage.StorageException ex)
+                    {
+                        log.LogError(ex, "Possible duplicate email");
 
-                    await tableBinding.AddAsync(email);
+                        // tell Mailgun not to retry
+                        return new StatusCodeResult(406);
+                    }
+                    
                 }
 
                 return new OkObjectResult("Success");
             }
-            catch (Microsoft.WindowsAzure.Storage.StorageException ex)
-            {
-                log.LogError(ex, "Possible duplicate email");
-
-                // tell Mailgun not to retry
-                return new StatusCodeResult(406);
-            }
+            
             catch (Exception ex)
             {
                 log.LogError(ex.ToString());
