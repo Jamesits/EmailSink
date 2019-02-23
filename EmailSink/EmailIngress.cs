@@ -135,21 +135,17 @@ namespace EmailSink
                 {
                     operation.Telemetry.Context.Operation.Id = context.InvocationId.ToString();
 
-                    try
-                    {
-                        await tableBinding.AddAsync(email);
-                    }
-                    catch (Microsoft.WindowsAzure.Storage.StorageException ex)
-                    {
-                        log.LogError(ex, "Possible duplicate email");
-
-                        // tell Mailgun not to retry
-                        return new StatusCodeResult(406);
-                    }
-                    
+                    await tableBinding.AddAsync(email);
                 }
 
                 return new OkObjectResult("Success");
+            }
+            catch (Microsoft.WindowsAzure.Storage.StorageException ex)
+            {
+                log.LogError(ex, "Possible duplicate email");
+
+                // tell Mailgun not to retry
+                return new StatusCodeResult(406);
             }
             catch (Exception ex)
             {
