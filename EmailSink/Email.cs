@@ -17,8 +17,8 @@ namespace EmailSink
         public string Recipient { get; set; }
         public string StrippedText { get; set; }
         public string StrippedSignature { get; set; }
-        public bool isHtml { get; set; }
-        public string Body { get; set; }
+        public string BodyPlain { get; set; }
+        public string BodyHtml { get; set; }
         public string MailgunVariables { get; set; }
     }
 }

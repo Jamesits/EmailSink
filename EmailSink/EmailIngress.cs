@@ -10,6 +10,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 using System.Net;
 using Microsoft.ApplicationInsights.DataContracts;
 using System.Text;
+using System.Web;
 
 namespace EmailSink
 {
@@ -29,6 +30,55 @@ namespace EmailSink
             Content = $"HTTP {(int)statusCode} {statusCode}: {reason}",
             ContentType = "text/plain",
         };
+
+        private static void Fill(string key, string value, Email email)
+        {
+            switch (key)
+            {
+                case "timestamp":
+                    email.HookTime = UnixTimeStampToDateTime(int.Parse(value));
+                    break;
+                case "Date":
+                    email.ReceivedTime = value;
+                    break;
+                case "from":
+                    email.From = value;
+                    break;
+                case "In-Reply-To":
+                    email.InReplyTo = value;
+                    break;
+                case "Message-Id":
+                    email.RowKey = value;
+                    break;
+                case "References":
+                    email.References = value;
+                    break;
+                case "sender":
+                    email.Sender = value;
+                    break;
+                case "subject":
+                    email.Subject = value;
+                    break;
+                case "recipient":
+                    email.Recipient = value;
+                    break;
+                case "user-agent":
+                    email.UserAgent = value;
+                    break;
+                case "attachment-count":
+                    email.AttachmentCount = int.Parse(value);
+                    break;
+                case "body-plain":
+                    email.BodyPlain = value;
+                    break;
+                case "body-html":
+                    email.BodyHtml = value;
+                    break;
+                case "X-Mailgun-Variables":
+                    email.MailgunVariables = value;
+                    break;
+            }
+        }
 
         [FunctionName("EmailIngress")]
         public static async System.Threading.Tasks.Task<IActionResult> Run(
@@ -50,82 +100,40 @@ namespace EmailSink
                     return new BadRequestObjectResult("Unidentifiable content");
                 }
 
-                // parse body
-                var stream = new StreamContent(req.Body);
-                stream.Headers.ContentType =
-                    System.Net.Http.Headers.MediaTypeHeaderValue.Parse(req.Headers["Content-Type"]);
-                log.LogInformation(stream.Headers.ContentType.ToString());
-                var result = await stream.ReadAsMultipartAsync();
-
                 var email = new Email()
                 {
                     PartitionKey = DateTime.UtcNow.Date.ToString("yyyyMMdd"),
                 };
-                var bodyPlain = "";
-                var bodyHtml = "";
 
-                foreach (var part in result.Contents)
+                // parse body
+                var stream = new StreamContent(req.Body);
+                var contentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(req.Headers["Content-Type"]);
+                stream.Headers.ContentType = contentType;
+                if (contentType.ToString().StartsWith("multipart"))
                 {
-                    var key = part.Headers.ContentDisposition.Name;
-                    var value = await part.ReadAsStringAsync();
-                    //log.LogInformation($"{key} = {value}");
+                    var result = await stream.ReadAsMultipartAsync();
 
-                    switch (key.Trim('\"'))
+                    foreach (var part in result.Contents)
                     {
-                        case "timestamp":
-                            email.HookTime = UnixTimeStampToDateTime(int.Parse(value));
-                            break;
-                        case "Date":
-                            email.ReceivedTime = value;
-                            break;
-                        case "from":
-                            email.From = value;
-                            break;
-                        case "In-Reply-To":
-                            email.InReplyTo = value;
-                            break;
-                        case "Message-Id":
-                            email.RowKey = value;
-                            break;
-                        case "References":
-                            email.References = value;
-                            break;
-                        case "sender":
-                            email.Sender = value;
-                            break;
-                        case "subject":
-                            email.Subject = value;
-                            break;
-                        case "recipient":
-                            email.Recipient = value;
-                            break;
-                        case "user-agent":
-                            email.UserAgent = value;
-                            break;
-                        case "attachment-count":
-                            email.AttachmentCount = int.Parse(value);
-                            break;
-                        case "body-plain":
-                            bodyPlain = value;
-                            break;
-                        case "body-html":
-                            bodyHtml = value;
-                            break;
-                        case "X-Mailgun-Variables":
-                            email.MailgunVariables = value;
-                            break;
+                        var key = part.Headers.ContentDisposition.Name;
+                        var value = await part.ReadAsStringAsync();
+                        //log.LogInformation($"{key} = {value}");
+
+                        Fill(key.Trim('\"'), value, email);
                     }
                 }
-
-                if (string.IsNullOrWhiteSpace(bodyHtml))
+                else if (contentType.ToString() == "application/x-www-form-urlencoded")
                 {
-                    email.Body = bodyPlain;
-                    email.isHtml = false;
+                    var coll = HttpUtility.ParseQueryString(await stream.ReadAsStringAsync());
+                    foreach (var key in coll.AllKeys)
+                    {
+                        var value = coll[key];
+                        Fill(key.Trim('\"'), value, email);
+                    }
                 }
                 else
                 {
-                    email.Body = bodyHtml;
-                    email.isHtml = true;
+                    throw new ArgumentException($"Unknown content type {contentType}");
                 }
 
                 if (string.IsNullOrWhiteSpace(email.RowKey))
