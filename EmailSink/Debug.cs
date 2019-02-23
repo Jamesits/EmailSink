@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -6,13 +7,13 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
+using Newtonsoft.Json;
 
 namespace EmailSink
 {
-    public class Entry
+    public class Entry: TableEntity
     {
-        public string PartitionKey { get; set; }
-        public string RowKey { get; set; }
     }
     public static class Debug
     {
@@ -21,17 +22,17 @@ namespace EmailSink
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]
             HttpRequest req,
             [Table("Debug")]
-            IAsyncCollector<Entry> tableBinding,
+            CloudTable tableBinding,
             ILogger log)
         {
             try
             {
-                await tableBinding.AddAsync(new Entry()
+                var op = TableOperation.Insert(new Entry()
                 {
                     PartitionKey = "1111",
                     RowKey = "1111",
                 });
-                await tableBinding.FlushAsync();
+                await tableBinding.ExecuteAsync(op);
             }
             catch (StorageException)
             {
