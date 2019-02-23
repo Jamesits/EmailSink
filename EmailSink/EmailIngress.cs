@@ -137,8 +137,11 @@ namespace EmailSink
                     operation.Telemetry.Context.Operation.Id = context.InvocationId.ToString();
                     try
                     {
+                        log.LogTrace("Start AddAsync");
                         await tableBinding.AddAsync(email);
+                        log.LogTrace("Start FlushAsync");
                         await tableBinding.FlushAsync();
+                        log.LogTrace("End AddAsync");
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -154,7 +157,7 @@ namespace EmailSink
                         // tell Mailgun not to retry
                         return new StatusCodeResult(406);
                     }
-
+                    log.LogTrace("End Operation");
                 }
 
                 return new OkObjectResult("Success");
