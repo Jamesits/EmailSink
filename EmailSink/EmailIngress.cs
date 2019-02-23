@@ -140,6 +140,7 @@ namespace EmailSink
                         // https://blogs.msdn.microsoft.com/ptorr/2014/12/10/async-exceptions-in-c/
                         var t = tableBinding.AddAsync(email);
                         await t;
+                        if (t.Exception != null) throw t.Exception;
                     }
                     catch (Microsoft.WindowsAzure.Storage.StorageException ex)
                     {
