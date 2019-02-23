@@ -1,23 +1,10 @@
 ﻿using System;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace EmailSink
 {
-    public class Email
+    public class Email : TableEntity
     {
-        // system-level key
-
-        /// <summary>
-        /// Automatically set to "yyyyMMdd", do not submit it in the request
-        /// </summary>
-        public string PartitionKey { get; set; }
-
-        /// <summary>
-        /// Unique primary key
-        /// </summary>
-        public string RowKey { get; set; }
-
-        // Add your own keys below
-
         public string ReceivedTime { get; set; }
         public DateTime? HookTime { get; set; }
         public string From { get; set; }

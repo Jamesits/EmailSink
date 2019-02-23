@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
 using System.Net;
 
 namespace EmailSink
@@ -32,7 +33,7 @@ namespace EmailSink
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]
             HttpRequest req,
             [Table("Emails")]
-            IAsyncCollector<Email> tableBinding,
+            CloudTable tableBinding,
             ExecutionContext context,
             ILogger log
             )
@@ -139,8 +140,7 @@ namespace EmailSink
                 // write to table
                 try
                 {
-                    await tableBinding.AddAsync(email);
-                    await tableBinding.FlushAsync();
+                    await tableBinding.ExecuteAsync(TableOperation.Insert(email));
                 }
                 catch (StorageException ex)
                 {
