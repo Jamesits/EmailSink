@@ -40,7 +40,7 @@ namespace EmailSink
                 }
 
                 // check if the request is coming from Mailgun
-                if (!req.Headers["User-Agent"].ToString().StartsWith("User-Agent"))
+                if (!req.Headers["User-Agent"].ToString().StartsWith("mailgun"))
                 {
                     return new BadRequestObjectResult("Unidentifiable content");
                 }
