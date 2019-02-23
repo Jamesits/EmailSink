@@ -120,6 +120,12 @@ namespace EmailSink
                     email.isHtml = true;
                 }
 
+                if (string.IsNullOrWhiteSpace(email.RowKey))
+                {
+                    log.LogWarning("Email Message-Id is empty");
+                    email.RowKey = Guid.NewGuid().ToString();
+                }
+
                 // write to table
                 using (var operation = Telemetry.Client.StartOperation<DependencyTelemetry>("WriteTable"))
                 {
