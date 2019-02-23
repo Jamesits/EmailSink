@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using System.Net;
+using Microsoft.ApplicationInsights.DataContracts;
+using System.Text;
 
 namespace EmailSink
 {
@@ -41,11 +43,6 @@ namespace EmailSink
             try
             {
                 // parse header
-                //log.LogWarning("Headers");
-                //foreach (var kvpair in req.Headers)
-                //{
-                //    log.LogInformation($"{kvpair.Key} = {kvpair.Value}");
-                //}
 
                 // check if the request is coming from Mailgun
                 if (!req.Headers["User-Agent"].ToString().StartsWith("mailgun"))
@@ -54,7 +51,6 @@ namespace EmailSink
                 }
 
                 // parse body
-                //log.LogWarning("RequestBody");
                 var stream = new StreamContent(req.Body);
                 stream.Headers.ContentType =
                     System.Net.Http.Headers.MediaTypeHeaderValue.Parse(req.Headers["Content-Type"]);
@@ -155,7 +151,22 @@ namespace EmailSink
             
             catch (Exception ex)
             {
-                log.LogError(ex, "Unhandled generic exception");
+                var t = new ExceptionTelemetry
+                {
+                    Exception = ex,
+                };
+
+                var sb = new StringBuilder();
+                foreach (var kvpair in req.Headers)
+                {
+                    sb.Append($"{kvpair.Key} = {kvpair.Value}\n");
+                }
+
+                t.Properties["Header"] = sb.ToString();
+
+                var stream = new StreamContent(req.Body);
+                t.Properties["Body"] = await stream.ReadAsStringAsync();
+                Telemetry.Client.TrackException(t);
 
                 // tell Mailgun to retry
                 return StaticActionResult(HttpStatusCode.InternalServerError, $"Unhandled exception: {ex}");
