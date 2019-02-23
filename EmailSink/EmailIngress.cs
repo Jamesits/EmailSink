@@ -8,6 +8,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.WindowsAzure.Storage;
 
 namespace EmailSink
 {
@@ -138,14 +139,21 @@ namespace EmailSink
                     {
                         await tableBinding.AddAsync(email);
                     }
-                    catch (System.InvalidOperationException ex)
+                    catch (InvalidOperationException ex)
                     {
-                        log.LogError(ex, "Possible duplicate email");
+                        log.LogWarning("Possible duplicate email at InvalidOperationException");
 
                         // tell Mailgun not to retry
                         return new StatusCodeResult(406);
                     }
-                    
+                    catch (StorageException ex)
+                    {
+                        log.LogWarning("Possible duplicate email at StorageException");
+
+                        // tell Mailgun not to retry
+                        return new StatusCodeResult(406);
+                    }
+
                 }
 
                 return new OkObjectResult("Success");
@@ -153,6 +161,7 @@ namespace EmailSink
             
             catch (Exception ex)
             {
+                log.LogWarning("Unprocessed global exception");
                 log.LogError(ex.ToString());
 
                 // tell Mailgun to retry
