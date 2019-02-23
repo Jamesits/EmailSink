@@ -65,7 +65,7 @@ namespace EmailSink
                     var value = await part.ReadAsStringAsync();
                     //log.LogInformation($"{key} = {value}");
 
-                    switch (key)
+                    switch (key.Trim('\"'))
                     {
                         case "timestamp":
                             email.HookTime = UnixTimeStampToDateTime(int.Parse(value));
