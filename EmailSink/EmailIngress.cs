@@ -138,6 +138,7 @@ namespace EmailSink
                     try
                     {
                         await tableBinding.AddAsync(email);
+                        await tableBinding.FlushAsync();
                     }
                     catch (InvalidOperationException ex)
                     {
