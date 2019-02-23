@@ -158,7 +158,10 @@ namespace EmailSink
             catch (Exception ex)
             {
                 log.LogError(ex.ToString());
-                Telemetry.Client.TrackException(ex);
+                if (ex is Microsoft.WindowsAzure.Storage.StorageException)
+                {
+                    log.LogWarning("Possible duplicate email");
+                }
 
                 // tell Mailgun to retry
                 return new InternalServerErrorResult();
