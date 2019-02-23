@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Web.Http;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -134,7 +135,18 @@ namespace EmailSink
                 {
                     operation.Telemetry.Context.Operation.Id = context.InvocationId.ToString();
 
-                    await tableBinding.AddAsync(email);
+                    try
+                    {
+                        await tableBinding.AddAsync(email);
+                    }
+                    catch (Microsoft.WindowsAzure.Storage.StorageException ex)
+                    {
+                        log.LogError(ex, "Possible duplicate email");
+
+                        // tell Mailgun not to retry
+                        return new StatusCodeResult(406);
+                    }
+                    
                 }
 
                 return new OkObjectResult("Success");
@@ -144,8 +156,8 @@ namespace EmailSink
                 log.LogError(ex.ToString());
                 Telemetry.Client.TrackException(ex);
 
-                // tell Mailgun to not retry
-                return new StatusCodeResult(406);
+                // tell Mailgun to retry
+                return new InternalServerErrorResult();
             }
 
 
