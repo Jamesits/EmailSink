@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -36,6 +37,10 @@ namespace EmailSink
             {
                 // we expect an Exception "The specified entity already exists"
                 return new OkObjectResult("This passes test");
+            }
+            catch (Exception)
+            {
+                return new OkObjectResult("test");
             }
 
             return new OkObjectResult("This passes test too");
