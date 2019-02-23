@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.WindowsAzure.Storage;
+using System.Net;
 
 namespace EmailSink
 {
@@ -21,6 +22,13 @@ namespace EmailSink
             dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dtDateTime;
         }
+
+        private static ActionResult StaticActionResult(HttpStatusCode statusCode, string reason) => new ContentResult
+        {
+            StatusCode = (int)statusCode,
+            Content = $"HTTP {(int)statusCode} {statusCode}: {reason}",
+            ContentType = "text/plain",
+        };
 
         [FunctionName("EmailIngress")]
         public static async System.Threading.Tasks.Task<IActionResult> Run(
@@ -132,45 +140,26 @@ namespace EmailSink
                 }
 
                 // write to table
-                using (var operation = Telemetry.Client.StartOperation<DependencyTelemetry>("WriteTable"))
+                try
                 {
-                    operation.Telemetry.Context.Operation.Id = context.InvocationId.ToString();
-                    try
-                    {
-                        
-                        log.LogInformation("Start AddAsync");
-                        await tableBinding.AddAsync(email);
-                        log.LogInformation("Start FlushAsync");
-                        await tableBinding.FlushAsync();
-                        log.LogInformation("End AddAsync");
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        log.LogWarning("Possible duplicate email at InvalidOperationException");
-
-                        // tell Mailgun not to retry
-                        return new StatusCodeResult(406);
-                    }
-                    catch (StorageException ex)
-                    {
-                        log.LogWarning("Possible duplicate email at StorageException");
-
-                        // tell Mailgun not to retry
-                        return new StatusCodeResult(406);
-                    }
-                    log.LogInformation("End Operation");
+                    await tableBinding.AddAsync(email);
+                    await tableBinding.FlushAsync();
                 }
-
+                catch (StorageException)
+                {
+                    // tell Mailgun not to retry
+                    return StaticActionResult(HttpStatusCode.NotAcceptable, "Possible duplicate email");
+                }
+                log.LogInformation("End Operation");
                 return new OkObjectResult("Success");
             }
             
             catch (Exception ex)
             {
-                log.LogWarning("Unprocessed global exception");
                 log.LogError(ex.ToString());
 
                 // tell Mailgun to retry
-                return new InternalServerErrorResult();
+                return StaticActionResult(HttpStatusCode.InternalServerError, $"Unhandled exception: {ex}");
             }
 
 
