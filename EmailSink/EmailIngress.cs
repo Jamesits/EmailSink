@@ -33,11 +33,11 @@ namespace EmailSink
             try
             {
                 // parse header
-                log.LogWarning("Headers");
-                foreach (var kvpair in req.Headers)
-                {
-                    log.LogInformation($"{kvpair.Key} = {kvpair.Value}");
-                }
+                //log.LogWarning("Headers");
+                //foreach (var kvpair in req.Headers)
+                //{
+                //    log.LogInformation($"{kvpair.Key} = {kvpair.Value}");
+                //}
 
                 // check if the request is coming from Mailgun
                 if (!req.Headers["User-Agent"].ToString().StartsWith("mailgun"))
@@ -46,7 +46,7 @@ namespace EmailSink
                 }
 
                 // parse body
-                log.LogWarning("RequestBody");
+                //log.LogWarning("RequestBody");
                 var stream = new StreamContent(req.Body);
                 stream.Headers.ContentType =
                     System.Net.Http.Headers.MediaTypeHeaderValue.Parse(req.Headers["Content-Type"]);
@@ -63,7 +63,7 @@ namespace EmailSink
                 {
                     var key = part.Headers.ContentDisposition.Name;
                     var value = await part.ReadAsStringAsync();
-                    log.LogInformation($"{key} = {value}");
+                    //log.LogInformation($"{key} = {value}");
 
                     switch (key)
                     {

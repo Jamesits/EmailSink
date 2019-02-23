@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace EmailSink
 {
@@ -21,7 +19,7 @@ namespace EmailSink
         // Add your own keys below
 
         public string ReceivedTime { get; set; }
-        public DateTime HookTime { get; set; }
+        public DateTime? HookTime { get; set; }
         public string From { get; set; }
         public string InReplyTo { get; set; }
         public string References { get; set; }
