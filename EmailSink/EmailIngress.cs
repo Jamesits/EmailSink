@@ -1,13 +1,10 @@
 using System;
 using System.Net.Http;
-using System.Web.Http;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.WindowsAzure.Storage;
 using System.Net;
 
@@ -18,7 +15,7 @@ namespace EmailSink
         public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
-            var dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            var dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dtDateTime;
         }
@@ -145,10 +142,11 @@ namespace EmailSink
                     await tableBinding.AddAsync(email);
                     await tableBinding.FlushAsync();
                 }
-                catch (StorageException)
+                catch (StorageException ex)
                 {
                     // tell Mailgun not to retry
-                    return StaticActionResult(HttpStatusCode.NotAcceptable, "Possible duplicate email");
+                    // this currently doesn't work and I don't know wtf is happening
+                    return StaticActionResult(HttpStatusCode.NotAcceptable, $"Possible duplicate email: {ex.RequestInformation.ExtendedErrorInformation.ErrorMessage}");
                 }
                 log.LogInformation("End Operation");
                 return new OkObjectResult("Success");
